@@ -114,13 +114,27 @@ static int load_symbols_bfd(bfd *bfd_h, Binary *bin) {
       goto fail;
     }
     for (i = 0; i < nsyms; i++) {
-      if (bfd_symtab[i]->flags & BSF_FUNCTION) { // 只在乎函式的 symbol
+      sym = bin->find_sym_by_name(std::string(bfd_symtab[i]->name));
+      bool is_global = bfd_symtab[i]->flags & BSF_GLOBAL;
+      bool is_weak = bfd_symtab[i]->flags & BSF_WEAK;
+
+      if (!sym) { // 不要覆蓋掉符號
         bin->symbols.push_back(Symbol());
         sym = &bin->symbols.back();
-        sym->type = Symbol::SYM_TYPE_FUNC;
-        sym->name = std::string(bfd_symtab[i]->name);
-        sym->addr = bfd_asymbol_value(bfd_symtab[i]);
       }
+
+      std::string type_name = bfd_symtab[i]->flags & BSF_FUNCTION ? "FUNC"
+                              : bfd_symtab[i]->flags & BSF_OBJECT ? "OBJ"
+                                                                  : "UKN";
+
+      sym->type = bfd_symtab[i]->flags & BSF_FUNCTION ? Symbol::SYM_TYPE_FUNC
+                  : bfd_symtab[i]->flags & BSF_OBJECT ? Symbol::SYM_TYPE_OBJ
+                                                      : Symbol::SYM_TYPE_UKN;
+      sym->binding = is_weak ? Symbol::SYM_BIND_WEAK
+                             : (is_global ? Symbol::SYM_BIND_GLOBAL
+                                          : Symbol::SYM_BIND_LOCAL);
+      sym->name = std::string(bfd_symtab[i]->name);
+      sym->addr = bfd_asymbol_value(bfd_symtab[i]);
     }
   }
 

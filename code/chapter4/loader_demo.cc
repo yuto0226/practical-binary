@@ -30,8 +30,14 @@ void dump_all(const Binary *bin, const Section *sec, const Symbol *sym) {
     printf("scanned symbol tables\n");
     for (int i = 0; i < bin->symbols.size(); i++) {
       sym = &bin->symbols[i];
-      printf("  %-40s 0x%016jx %s\n", sym->name.c_str(), sym->addr,
-             (sym->type & Symbol::SYM_TYPE_FUNC) ? "FUNC" : "");
+      printf("  %-40s 0x%016jx %4s %s\n", sym->name.c_str(), sym->addr,
+             (sym->type & Symbol::SYM_TYPE_FUNC)  ? "FUNC"
+             : (sym->type & Symbol::SYM_TYPE_OBJ) ? "OBJ"
+                                                  : "UKN",
+             sym->binding == Symbol::SYM_BIND_WEAK     ? "WEAK"
+             : sym->binding == Symbol::SYM_BIND_LOCAL  ? "LOCAL"
+             : sym->binding == Symbol::SYM_BIND_GLOBAL ? "GLOBAL"
+                                                       : "");
     }
   }
 }
